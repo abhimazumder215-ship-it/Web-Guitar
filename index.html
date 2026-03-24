@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Guitar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0a08;
+      --bg2: #150e06;
+      --bg3: #1a1208;
+      --surface: #1a0f07;
+      --surface2: #2a1a0d;
+      --border: #3a2e22;
+      --border2: #3a2810;
+      --gold: #c8913a;
+      --gold-light: #e8c87a;
+      --text: #c8b89a;
+      --text-muted: #7a6a55;
+      --text-dim: #4a3a28;
+      --text-bright: #e8d5b0;
+      --string1: #d4a96a;
+      --string2: #c89a5a;
+      --string3: #b88a4a;
+      --string4: #a87a3a;
+      --string5: #987030;
+      --string6: #886028;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      text-align: center;
+      padding: 36px 16px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: 2px;
+    }
+    header p {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    /* ── LAYOUT ── */
+    .app {
+      max-width: 940px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* ── GUITAR TYPE SELECTOR ── */
+    .guitar-select {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .gs-btn {
+      padding: 8px 22px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 2px;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .gs-btn.active {
+      background: #2a1e12;
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+    .gs-btn:hover:not(.active) {
+      border-color: #6a5a45;
+      color: var(--text);
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px 20px;
+    }
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .ctrl-group label {
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      min-width: 55px;
+    }
+    input[type=range] {
+      width: 100px;
+      accent-color: var(--gold);
+      cursor: pointer;
+      height: 4px;
+    }
+    .val-display {
+      font-size: 12px;
+      color: var(--gold-light);
+      min-width: 28px;
+      text-align: right;
+    }
+    .select-btn {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .select-btn:hover {
+      background: #2a1e12;
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    /* ── FRET NUMBERS ── */
+    .fret-numbers {
+      display: flex;
+      padding: 0 80px 0 84px;
+      margin-bottom: 6px;
+    }
+    .fret-num {
+      flex: 1;
+      text-align: center;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .fret-num.marker { color: #7a5a35; }
+
+    /* ── FRETBOARD ── */
+    .fretboard-wrap {
+      position: relative;
+      background: linear-gradient(180deg,#1a0f07 0%,#2a1a0d 30%,#1e1208 70%,#150e06 100%);
+      border-radius: 6px;
+      border: 2px solid var(--border2);
+      padding: 12px 0;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .nut {
+      position: absolute;
+      left: 72px;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: linear-gradient(180deg, #e8d8c0, #c8b890);
+      z-index: 5;
+    }
+    .strings-container {
+      position: relative;
+      padding: 0 80px 0 84px;
+    }
+    .string-row {
+      display: flex;
+      align-items: center;
+      height: 46px;
+      position: relative;
+    }
+    .string-label {
+      position: absolute;
+      left: -78px;
+      font-size: 13px;
+      color: var(--gold);
+      font-weight: 500;
+      width: 68px;
+      text-align: right;
+      font-family: 'Playfair Display', serif;
+      user-select: none;
+    }
+    .string-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 2px;
+      transform: translateY(-50%);
+      pointer-events: none;
+      border-radius: 1px;
+    }
+    .frets-row {
+      display: flex;
+      height: 100%;
+      position: relative;
+      z-index: 2;
+      width: 100%;
+    }
+    .fret-cell {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      height: 46px;
+      border-right: 2px solid #6a4a28;
+    }
+    .fret-cell:last-child { border-right: none; }
+    .fret-cell:hover .dot-btn,
+    .fret-cell.active .dot-btn { opacity: 1; transform: scale(1); }
+    .dot-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.15s;
+      position: relative;
+      z-index: 3;
+    }
+    .fret-cell.active .dot-btn {
+      background: var(--gold-light);
+    }
+    .fret-cell.playing .dot-btn {
+      background: #fff5c0;
+      opacity: 1;
+      transform: scale(1.15);
+      box-shadow: 0 0 12px #c8913a;
+    }
+
+    /* dot markers on fretboard */
+    .fret-marker-dot {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3a2810;
+      pointer-events: none;
+    }
+
+    /* ── KEY MAP ── */
+    .key-map {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .key-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .key-col-label {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+    .key-badge {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1208;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 13px;
+      color: #8a7a65;
+      font-family: 'DM Mono', monospace;
+      transition: all 0.1s;
+      cursor: default;
+      user-select: none;
+    }
+    .key-badge.pressed {
+      background: #2a1e12;
+      border-color: var(--gold);
+      color: var(--gold-light);
+      transform: scale(0.9);
+    }
+
+    /* ── CHORD PANEL ── */
+    .chord-panel {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .chord-btn {
+      padding: 8px 18px;
+      background: #110e08;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 2px;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .chord-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold-light);
+      background: #1a1208;
+    }
+    .chord-btn.playing {
+      background: #2a1e12;
+      border-color: var(--gold-light);
+      color: var(--gold-light);
+    }
+
+    /* ── WAVEFORM ── */
+    .waveform-bar {
+      display: flex;
+      gap: 2px;
+      justify-content: center;
+      align-items: flex-end;
+      height: 32px;
+      margin-bottom: 10px;
+    }
+    .w-bar {
+      width: 5px;
+      background: #2a1e12;
+      border-radius: 1px;
+      transition: height 0.08s;
+    }
+    .w-bar.active { background: var(--gold); }
+
+    /* ── STATUS ── */
+    .status {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      height: 18px;
+    }
+    .status.on { color: var(--gold); }
+
+    /* ── KEYBOARD HINT ── */
+    .hint-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+    }
+    .hint-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+    }
+    .hint-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .hint-key {
+      display: inline-block;
+      background: #1a1208;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--gold-light);
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 600px) {
+      header h1 { font-size: 28px; }
+      .fret-numbers, .strings-container { padding-left: 56px; padding-right: 8px; }
+      .nut { left: 48px; }
+      .string-label { left: -52px; width: 46px; font-size: 11px; }
+      .fret-cell { border-right-width: 1px; }
+      .dot-btn { width: 22px; height: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Web Guitar</h1>
+  <p>acoustic · electric · bass · classical</p>
+</header>
+
+<div class="app">
+
+  <!-- Guitar type -->
+  <div class="guitar-select">
+    <button class="gs-btn active" data-type="acoustic">Acoustic</button>
+    <button class="gs-btn" data-type="electric">Electric</button>
+    <button class="gs-btn" data-type="bass">Bass</button>
+    <button class="gs-btn" data-type="classical">Classical</button>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Volume</label>
+      <input type="range" id="vol" min="0" max="100" value="75" step="1" />
+      <span class="val-display" id="vol-val">75</span>
+    </div>
+    <div class="ctrl-group">
+      <label>Reverb</label>
+      <input type="range" id="rev" min="0" max="100" value="30" step="1" />
+      <span class="val-display" id="rev-val">30</span>
+    </div>
+    <div class="ctrl-group">
+      <label>Sustain</label>
+      <input type="range" id="sus" min="10" max="100" value="60" step="1" />
+      <span class="val-display" id="sus-val">60</span>
+    </div>
+    <div class="ctrl-group">
+      <label>Octave</label>
+      <button class="select-btn" id="oct-dn">−</button>
+      <span class="val-display" id="oct-val">3</span>
+      <button class="select-btn" id="oct-up">+</button>
+    </div>
+  </div>
+
+  <!-- Fretboard -->
+  <p class="section-title">fretboard — click any fret or use keyboard</p>
+  <div class="fret-numbers" id="fret-nums"></div>
+  <div class="fretboard-wrap" id="fretboard">
+    <div class="nut"></div>
+    <div class="strings-container" id="strings-container"></div>
+  </div>
+
+  <!-- Keyboard map -->
+  <p class="section-title">keyboard mapping</p>
+  <div class="key-map" id="key-map"></div>
+
+  <!-- Keyboard hints -->
+  <div class="hint-box">
+    <div class="hint-grid">
+      <div class="hint-row"><span class="hint-key">A S D F G H</span> open strings (low → high)</div>
+      <div class="hint-row"><span class="hint-key">Z X C V B N</span> fret 1</div>
+      <div class="hint-row"><span class="hint-key">Q W E R T Y</span> fret 2</div>
+      <div class="hint-row"><span class="hint-key">1 2 3 4 5 6</span> fret 3</div>
+      <div class="hint-row"><span class="hint-key">Space</span> random chord strum</div>
+    </div>
+  </div>
+
+  <!-- Chord shortcuts -->
+  <p class="section-title">chord shortcuts — click to strum</p>
+  <div class="chord-panel" id="chord-panel"></div>
+
+  <!-- Waveform + status -->
+  <div class="waveform-bar" id="waveform"></div>
+  <div class="status" id="status">ready</div>
+
+</div><!-- /app -->
+
+<footer>
+  web guitar &nbsp;·&nbsp; built with web audio api &nbsp;·&nbsp; open source
+</footer>
+
+<script>
+  /* ─────────────────────────────────────────
+     CONFIG
+  ───────────────────────────────────────── */
+  const GUITAR_CONFIGS = {
+    acoustic: {
+      strings: ['E2','A2','D3','G3','B3','E4'],
+      color: ['#d4a96a','#c89a5a','#b88a4a','#a87a3a','#987030','#886028'],
+      thickness: [3.5, 3, 2.5, 2, 1.5, 1],
+      waveform: 'triangle',
+      attack: 0.002, decay: 0.8, sustain: 0.1, release: 2.2, brightness: 1800
+    },
+    electric: {
+      strings: ['E2','A2','D3','G3','B3','E4'],
+      color: ['#a0c0e0','#90b0d0','#80a0c0','#7090b0','#6080a0','#507090'],
+      thickness: [3, 2.5, 2, 1.5, 1.2, 1],
+      waveform: 'sawtooth',
+      attack: 0.001, decay: 0.4, sustain: 0.5, release: 1.6, brightness: 3200
+    },
+    bass: {
+      strings: ['E1','A1','D2','G2'],
+      color: ['#e0a060','#d09050','#c08040','#b07030'],
+      thickness: [5, 4, 3, 2.5],
+      waveform: 'sine',
+      attack: 0.005, decay: 1.3, sustain: 0.35, release: 2.0, brightness: 600
+    },
+    classical: {
+      strings: ['E2','A2','D3','G3','B3','E4'],
+      color: ['#e8d8a0','#d8c890','#c8b880','#b8a870','#a89860','#988850'],
+      thickness: [3, 2.5, 2, 1.5, 1.2, 1],
+      waveform: 'sine',
+      attack: 0.012, decay: 0.65, sustain: 0.15, release: 2.8, brightness: 1100
+    }
+  };
+
+  const NOTE_FREQS = {
+    'E1':41.2,'A1':55.0,'D2':73.4,'G2':98.0,
+    'E2':82.4,'A2':110.0,'D3':146.8,'G3':196.0,'B3':246.9,'E4':329.6
+  };
+
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const NOTE_INDEX = {C:0,'C#':1,D:2,'D#':3,E:4,F:5,'F#':6,G:7,'G#':8,A:9,'A#':10,B:11};
+
+  const CHORDS = {
+    'Em':[[0,0],[1,2],[2,2],[3,0],[4,0],[5,0]],
+    'Am':[[0,-1],[1,0],[2,2],[3,2],[4,1],[5,0]],
+    'C': [[0,-1],[1,3],[2,2],[3,0],[4,1],[5,0]],
+    'G': [[0,3],[1,2],[2,0],[3,0],[4,0],[5,3]],
+    'D': [[0,-1],[1,-1],[2,0],[3,2],[4,3],[5,2]],
+    'E': [[0,0],[1,2],[2,2],[3,1],[4,0],[5,0]],
+    'A': [[0,-1],[1,0],[2,2],[3,2],[4,2],[5,0]],
+    'F': [[0,1],[1,1],[2,2],[3,3],[4,3],[5,1]],
+    'Bm':[[0,-1],[1,2],[2,4],[3,4],[4,3],[5,2]],
+    'D7':[[0,-1],[1,-1],[2,0],[3,2],[4,1],[5,2]],
+  };
+
+  const KEY_BINDINGS = [
+    { keys:['a','s','d','f','g','h'], fret:0, label:'open' },
+    { keys:['z','x','c','v','b','n'], fret:1, label:'fret 1' },
+    { keys:['q','w','e','r','t','y'], fret:2, label:'fret 2' },
+    { keys:['1','2','3','4','5','6'], fret:3, label:'fret 3' },
+  ];
+
+  const FRET_COUNT = 12;
+  const FRET_MARKERS = [3,5,7,9,12];
+
+  /* ─────────────────────────────────────────
+     AUDIO ENGINE
+  ───────────────────────────────────────── */
+  let audioCtx    = null;
+  let masterGain  = null;
+  let reverbNode  = null;
+  let currentType = 'acoustic';
+  let octaveShift = 0;
+  let volume      = 0.75;
+  let reverbMix   = 0.30;
+  let sustainMult = 0.60;
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = volume;
+    masterGain.connect(audioCtx.destination);
+
+    // Convolution reverb
+    reverbNode = audioCtx.createConvolver();
+    const len  = audioCtx.sampleRate * 2.8;
+    const buf  = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4);
+    }
+    reverbNode.buffer = buf;
+    reverbNode.connect(masterGain);
+  }
+
+  function playNote(freq, type, label) {
+    initAudio();
+    const cfg = GUITAR_CONFIGS[type];
+    const now = audioCtx.currentTime;
+    const oct = Math.pow(2, octaveShift);
+    const f   = freq * oct;
+
+    const osc1   = audioCtx.createOscillator();
+    const osc2   = audioCtx.createOscillator();
+    const gainN  = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc1.type = cfg.waveform;
+    osc2.type = 'triangle';
+    osc1.frequency.value = f;
+    osc2.frequency.value = f * 2.007;
+
+    filter.type = 'lowpass';
+    filter.frequency.value = cfg.brightness;
+    filter.Q.value = 1.3;
+
+    const rel = cfg.release * (sustainMult / 0.6);
+    gainN.gain.setValueAtTime(0, now);
+    gainN.gain.linearRampToValueAtTime(0.55, now + cfg.attack);
+    gainN.gain.exponentialRampToValueAtTime(Math.max(cfg.sustain, 0.001), now + cfg.attack + cfg.decay);
+    gainN.gain.exponentialRampToValueAtTime(0.0001, now + cfg.attack + cfg.decay + rel);
+
+    osc1.connect(filter); osc2.connect(filter);
+    filter.connect(gainN);
+
+    const dryG = audioCtx.createGain();
+    const wetG = audioCtx.createGain();
+    dryG.gain.value = 1 - reverbMix * 0.65;
+    wetG.gain.value = reverbMix * 0.65;
+    gainN.connect(dryG); gainN.connect(wetG);
+    dryG.connect(masterGain);
+    if (reverbNode) wetG.connect(reverbNode);
+
+    const endTime = now + cfg.attack + cfg.decay + rel + 0.1;
+    osc1.start(now); osc1.stop(endTime);
+    osc2.start(now); osc2.stop(endTime);
+
+    animateWave();
+    showStatus('♪  ' + label);
+  }
+
+  /* ─────────────────────────────────────────
+     HELPERS
+  ───────────────────────────────────────── */
+  function noteAtFret(stringNote, fret) {
+    const base   = stringNote.slice(0, -1);
+    const octave = parseInt(stringNote.slice(-1));
+    const idx    = NOTE_INDEX[base] ?? 4;
+    const newIdx = (idx + fret) % 12;
+    const octAdd = Math.floor((idx + fret) / 12);
+    return NOTE_NAMES[newIdx] + (octave + octAdd);
+  }
+
+  function freqAtFret(stringNote, fret) {
+    return (NOTE_FREQS[stringNote] || 110) * Math.pow(2, fret / 12);
+  }
+
+  /* ─────────────────────────────────────────
+     BUILD UI
+  ───────────────────────────────────────── */
+  function buildFretNumbers() {
+    const el = document.getElementById('fret-nums');
+    el.innerHTML = '';
+    for (let f = 0; f <= FRET_COUNT; f++) {
+      const d = document.createElement('div');
+      d.className = 'fret-num' + (FRET_MARKERS.includes(f) ? ' marker' : '');
+      d.textContent = f === 0 ? '' : f;
+      el.appendChild(d);
+    }
+  }
+
+  function buildFretboard() {
+    const cfg       = GUITAR_CONFIGS[currentType];
+    const container = document.getElementById('strings-container');
+    container.innerHTML = '';
+
+    cfg.strings.forEach((str, si) => {
+      const row = document.createElement('div');
+      row.className = 'string-row';
+
+      // label
+      const lbl = document.createElement('div');
+      lbl.className = 'string-label';
+      lbl.textContent = str;
+      row.appendChild(lbl);
+
+      // visible string line
+      const line = document.createElement('div');
+      line.className = 'string-line';
+      line.style.background = cfg.color[si];
+      line.style.height = cfg.thickness[si] + 'px';
+      line.style.opacity = '0.75';
+      row.appendChild(line);
+
+      // fret cells
+      const fretRow = document.createElement('div');
+      fretRow.className = 'frets-row';
+
+      for (let f = 0; f <= FRET_COUNT; f++) {
+        const cell = document.createElement('div');
+        cell.className = 'fret-cell';
+        cell.dataset.string = si;
+        cell.dataset.fret   = f;
+
+        // dot marker decoration on certain frets (bottom of last string)
+        if (si === cfg.strings.length - 1 && FRET_MARKERS.includes(f)) {
+          const md = document.createElement('div');
+          md.className = 'fret-marker-dot';
+          cell.appendChild(md);
+        }
+
+        const dot = document.createElement('button');
+        dot.className = 'dot-btn';
+        dot.addEventListener('click', () => {
+          const freq = freqAtFret(str, f);
+          playNote(freq, currentType, noteAtFret(str, f));
+          flashCell(cell);
+        });
+        cell.appendChild(dot);
+        fretRow.appendChild(cell);
+      }
+
+      row.appendChild(fretRow);
+      container.appendChild(row);
+    });
+  }
+
+  function flashCell(cell) {
+    cell.classList.add('playing');
+    setTimeout(() => cell.classList.remove('playing'), 380);
+  }
+
+  function buildKeyMap() {
+    const km  = document.getElementById('key-map');
+    km.innerHTML = '';
+    const cfg = GUITAR_CONFIGS[currentType];
+
+    window._keyMap = {};
+
+    KEY_BINDINGS.forEach(row => {
+      const col = document.createElement('div');
+      col.className = 'key-col';
+
+      const lbl = document.createElement('div');
+      lbl.className = 'key-col-label';
+      lbl.textContent = row.label;
+      col.appendChild(lbl);
+
+      row.keys.forEach((k, i) => {
+        if (i >= cfg.strings.length) return;
+        window._keyMap[k] = { stringIdx: i, fret: row.fret };
+        const badge = document.createElement('div');
+        badge.className = 'key-badge';
+        badge.id = 'key-' + k;
+        badge.textContent = k;
+        col.appendChild(badge);
+      });
+
+      km.appendChild(col);
+    });
+  }
+
+  function buildChords() {
+    const panel = document.getElementById('chord-panel');
+    panel.innerHTML = '';
+
+    if (currentType === 'bass') {
+      panel.innerHTML = '<span style="font-size:11px;color:#4a3a28;letter-spacing:1px">— use keyboard for bass root notes —</span>';
+      return;
+    }
+
+    Object.keys(CHORDS).forEach(name => {
+      const btn = document.createElement('button');
+      btn.className = 'chord-btn';
+      btn.textContent = name;
+      btn.addEventListener('click', () => strumChord(name, btn));
+      panel.appendChild(btn);
+    });
+  }
+
+  function strumChord(name, btn) {
+    const cfg    = GUITAR_CONFIGS[currentType];
+    const chord  = CHORDS[name];
+    btn.classList.add('playing');
+    setTimeout(() => btn.classList.remove('playing'), 700);
+
+    chord.forEach(([strIdx, fret], i) => {
+      if (fret < 0 || strIdx >= cfg.strings.length) return;
+      setTimeout(() => {
+        const freq = freqAtFret(cfg.strings[strIdx], fret);
+        playNote(freq * 0.82, currentType, name + ' chord');
+        document.querySelectorAll(`.fret-cell[data-string="${strIdx}"][data-fret="${fret}"]`)
+          .forEach(c => flashCell(c));
+      }, i * 55);
+    });
+    showStatus(name + ' chord');
+  }
+
+  /* ─────────────────────────────────────────
+     WAVEFORM + STATUS
+  ───────────────────────────────────────── */
+  let waveBars = [];
+
+  function buildWaveform() {
+    const wf = document.getElementById('waveform');
+    wf.innerHTML = '';
+    waveBars = [];
+    for (let i = 0; i < 36; i++) {
+      const b = document.createElement('div');
+      b.className = 'w-bar';
+      b.style.height = '4px';
+      wf.appendChild(b);
+      waveBars.push(b);
+    }
+  }
+
+  function animateWave() {
+    waveBars.forEach((b, i) => {
+      const h = 4 + Math.random() * 24;
+      b.style.height = h + 'px';
+      b.classList.add('active');
+      setTimeout(() => { b.style.height = '4px'; b.classList.remove('active'); }, 130 + i * 16);
+    });
+  }
+
+  function showStatus(msg) {
+    const s = document.getElementById('status');
+    s.textContent = msg;
+    s.classList.add('on');
+    clearTimeout(s._t);
+    s._t = setTimeout(() => { s.textContent = 'ready'; s.classList.remove('on'); }, 1400);
+  }
+
+  /* ─────────────────────────────────────────
+     EVENT LISTENERS
+  ───────────────────────────────────────── */
+  function bindControls() {
+    // guitar type
+    document.querySelectorAll('.gs-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.gs-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentType = btn.dataset.type;
+        buildFretboard();
+        buildKeyMap();
+        buildChords();
+        showStatus(currentType + ' selected');
+      });
+    });
+
+    // volume
+    const vol = document.getElementById('vol');
+    vol.addEventListener('input', () => {
+      volume = vol.value / 100;
+      document.getElementById('vol-val').textContent = vol.value;
+      if (masterGain) masterGain.gain.value = volume;
+    });
+
+    // reverb
+    const rev = document.getElementById('rev');
+    rev.addEventListener('input', () => {
+      reverbMix = rev.value / 100;
+      document.getElementById('rev-val').textContent = rev.value;
+    });
+
+    // sustain
+    const sus = document.getElementById('sus');
+    sus.addEventListener('input', () => {
+      sustainMult = sus.value / 100;
+      document.getElementById('sus-val').textContent = sus.value;
+    });
+
+    // octave
+    document.getElementById('oct-dn').addEventListener('click', () => {
+      if (octaveShift > -2) { octaveShift--; document.getElementById('oct-val').textContent = 3 + octaveShift; }
+    });
+    document.getElementById('oct-up').addEventListener('click', () => {
+      if (octaveShift < 2)  { octaveShift++; document.getElementById('oct-val').textContent = 3 + octaveShift; }
+    });
+
+    // keyboard
+    document.addEventListener('keydown', e => {
+      if (e.repeat) return;
+      const key = e.key.toLowerCase();
+      const map = window._keyMap;
+
+      // Space = random chord
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (currentType !== 'bass') {
+          const names = Object.keys(CHORDS);
+          const rnd   = names[Math.floor(Math.random() * names.length)];
+          const btn   = [...document.querySelectorAll('.chord-btn')].find(b => b.textContent === rnd);
+          if (btn) strumChord(rnd, btn);
+        }
+        return;
+      }
+
+      if (map && map[key]) {
+        const { stringIdx, fret } = map[key];
+        const cfg = GUITAR_CONFIGS[currentType];
+        if (stringIdx < cfg.strings.length) {
+          const freq = freqAtFret(cfg.strings[stringIdx], fret);
+          playNote(freq, currentType, noteAtFret(cfg.strings[stringIdx], fret));
+          const badge = document.getElementById('key-' + key);
+          if (badge) {
+            badge.classList.add('pressed');
+            setTimeout(() => badge.classList.remove('pressed'), 200);
+          }
+          document.querySelectorAll(`.fret-cell[data-string="${stringIdx}"][data-fret="${fret}"]`)
+            .forEach(c => flashCell(c));
+        }
+      }
+    });
+  }
+
+  /* ─────────────────────────────────────────
+     INIT
+  ───────────────────────────────────────── */
+  function init() {
+    buildFretNumbers();
+    buildFretboard();
+    buildKeyMap();
+    buildChords();
+    buildWaveform();
+    bindControls();
+  }
+
+  init();
+</script>
+</body>
+</html>
